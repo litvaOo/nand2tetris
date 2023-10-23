@@ -282,7 +282,4 @@ M=D"""
                     file.write(push_pop_table[line.split()[0]][line.split()[1]].format(i=int(line.split()[2])+3))
                 else:
                     file.write(push_pop_table[line.split()[0]][line.split()[1]].format(i=line.split()[2], filename=sys.argv[1].split(".")[0].split("/")[-1]))
-            file.write("\n")
-            file.write("\n")
-    # for line in lines:
-    #     print(line)
+            file.write("\n\n")
