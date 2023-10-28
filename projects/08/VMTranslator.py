@@ -1,4 +1,5 @@
 import sys, os, glob
+from pathlib import Path
 
 select_two = """@SP
 M=M-1
@@ -382,11 +383,16 @@ M=D
     res = [func_table["start"].format(filename=sys.argv[1].split("/")[-2].split(".")[0])]
     if not os.path.isdir(sys.argv[1]):
         res = file_parse(sys.argv[1])
-    elif len(glob.glob(sys.argv[1] + '/*.vm')) == 1:
-        res = file_parse(glob.glob(sys.argv[1] + '/*.vm')[0])
+        with open(sys.argv[1].split(".")[0] + ".asm", "w") as file:
+            for line in res:
+                file.write(line)
+        exit()
+    elif len(glob.glob(sys.argv[1] + '*.vm')) == 1:
+        res = file_parse(glob.glob(sys.argv[1] + '*.vm')[0])
     else:
-        for filename in glob.glob(sys.argv[1] + '/*.vm'):
+        for filename in glob.glob(sys.argv[1] + '*.vm'):
             res += file_parse(filename)
-    with open(sys.argv[1].split("/")[-2].split(".")[0] + ".asm", "w") as file:
+    
+    with open(os.path.dirname(sys.argv[1]) + "/" + Path(sys.argv[1]).stem + ".asm", "w") as file:
         for line in res:
             file.write(line)
