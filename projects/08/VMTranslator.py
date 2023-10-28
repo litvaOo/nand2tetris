@@ -35,7 +35,6 @@ pop_from_stack = """@SP\nM=M-1\nA=M\nD=M\n"""
 void_local = "@{i}\nD=A\n@LCL\nA=M+D\nM=0\n@SP\nM=M+1"
 
 if __name__ == "__main__":
-    lines = []
     
     single_table = {
         "add": f"{select_two}M=M+D\n",
@@ -345,6 +344,7 @@ M=D
 
     def file_parse(filename):
         with open(filename) as file:
+            lines = []
             for line in file:
                 if line.startswith("//") or line == "\n":
                     continue
@@ -353,37 +353,38 @@ M=D
                     line = line[:index]
                 line = line.strip()
                 lines.append(line)
-        res = [f"// {filename}"]
+        result = [f"// {filename}\n"]
         for index, line in enumerate(lines):
-                res.append(f'// {line}\n')
+                result.append(f'// {line}\n')
                 if len(line.split()) == 1:
                     if line.split()[0] == "return":
-                        res.append(func_table[line.split()[0]].format(i=index, filename=filename.split(".")[0].split("/")[-1], function_name=func_stack[-1]))
+                        result.append(func_table[line.split()[0]].format(i=index, filename=filename.split(".")[0].split("/")[-1], function_name=func_stack[-1]))
                         func_stack.pop()
                     else:
-                        res.append(single_table[line.split()[0]].format(i=index))
+                        result.append(single_table[line.split()[0]].format(i=index))
                 elif len(line.split()) == 2:
-                    res.append(goto_table[line.split()[0]].format(label=line.split()[1], filename=filename.split(".")[0].split("/")[-1]))
+                    result.append(goto_table[line.split()[0]].format(label=line.split()[1], filename=filename.split(".")[0].split("/")[-1]))
                 else:
                     if line.split()[0] == "function":
                         func_stack.append(line.split()[1])
-                        res.append(func_table[line.split()[0]].format(filename=filename.split(".")[0].split("/")[-1], function_name=line.split()[1], locals_push="\n".join(list([void_local.format(i=i) for i in range(int(line.split()[2]))]))))
+                        result.append(func_table[line.split()[0]].format(filename=filename.split(".")[0].split("/")[-1], function_name=line.split()[1], locals_push="\n".join(list([void_local.format(i=i) for i in range(int(line.split()[2]))]))))
                     elif line.split()[0] == "call":
-                        res.append(func_table[line.split()[0]].format(filename=filename.split(".")[0].split("/")[-1], function_name=func_stack[-1], i=index, goto_function_name=line.split()[1], nArgs_shift=5+int(line.split()[2])))
+                        result.append(func_table[line.split()[0]].format(filename=filename.split(".")[0].split("/")[-1], function_name=func_stack[-1], i=index, goto_function_name=line.split()[1], nArgs_shift=5+int(line.split()[2])))
                     elif (line.split()[1] == "temp"):
-                        res.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=int(line.split()[2])+5))
+                        result.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=int(line.split()[2])+5))
                     elif (line.split()[1] == "pointer"):
-                        res.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=int(line.split()[2])+3))
+                        result.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=int(line.split()[2])+3))
                     else:
-                        res.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=line.split()[2], filename=filename.split(".")[0].split("/")[-1]))
-                res.append("\n\n")
-        return res
+                        result.append(push_pop_table[line.split()[0]][line.split()[1]].format(i=line.split()[2], filename=filename.split(".")[0].split("/")[-1]))
+                result.append("\n\n")
+        return result
 
     res = [func_table["start"].format(filename=sys.argv[1].split("/")[-2].split(".")[0])]
     if not os.path.isdir(sys.argv[1]):
         res = file_parse(sys.argv[1])
+    elif len(glob.glob(sys.argv[1] + '/*.vm')) == 1:
+        res = file_parse(glob.glob(sys.argv[1] + '/*.vm')[0])
     else:
-        print(glob.glob(sys.argv[1] + '/*.vm'))
         for filename in glob.glob(sys.argv[1] + '/*.vm'):
             res += file_parse(filename)
     with open(sys.argv[1].split("/")[-2].split(".")[0] + ".asm", "w") as file:
